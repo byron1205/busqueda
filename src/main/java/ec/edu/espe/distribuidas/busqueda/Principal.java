@@ -8,11 +8,10 @@ package ec.edu.espe.distribuidas.busqueda;
 import ec.edu.espe.distribuidas.busqueda.model.Persona;
 import ec.edu.espe.distribuidas.busqueda.model.PersonaDAO;
 import ec.edu.espe.distribuidas.busqueda.view.frmBusqueda;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.Date;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,12 +29,14 @@ public class Principal {
         frm.setVisible(true);
         
 //        PersonaDAO dao = new PersonaDAO();
+//        dao.conectarMysql();
+//        dao.conectarRedis();
 //        dao.conectarMongo();
-//        try {
-//            dao.leerArchivo("final.txt");
-//        } catch (IOException ex) {
-//            Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+//
+//        dao.insertarBases();
+//        
+//        dao.cerrarMysql();
+//        dao.cerrarRedis();
 
     }
 

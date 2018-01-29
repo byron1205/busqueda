@@ -25,6 +25,7 @@ import org.bson.Document;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Locale;
 
 /**
@@ -41,7 +42,7 @@ public class PersonaDAO {
 
     private MongoClient mongoClient;
     private MongoDatabase mongodb;
-
+    
     public void conectarMysql() {
         this.obj = ConexionMysql.getInstancia();
         this.con = obj.conectar();
@@ -71,36 +72,49 @@ public class PersonaDAO {
         }
     }
 
-    public void leerArchivo(String archivo) throws FileNotFoundException, IOException {
+    public ArrayList<Persona> leerArchivo(String archivo) throws FileNotFoundException, IOException {
         String cadena;
         String[] persona;
         FileReader f = new FileReader(archivo);
         BufferedReader b = new BufferedReader(f);
-        Persona objPersona = new Persona();
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        
+        Persona objPersona=null;
+        ArrayList<Persona> listaPersonas=new ArrayList<>();
         while ((cadena = b.readLine()) != null) {
+            objPersona = new Persona();
             persona = cadena.split("\\|");
             objPersona.setCedula(persona[0]);
             objPersona.setNombre(persona[1]);
             objPersona.setApellido(persona[2]);
-            try {
-                objPersona.setFechaNacimiento(format.parse(persona[3]));
-            } catch (ParseException ex) {
-                Logger.getLogger(PersonaDAO.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            System.out.println(objPersona.toString());
-            //insertarPersonaMysql(objPersona);
-            //insertarPersonaRedis(objPersona);
-            insertarPersonaMongo(objPersona);
+            objPersona.setFechaNacimiento(persona[3]);
+            listaPersonas.add(objPersona);
         }
         b.close();
+        System.out.println("ArrayList Cargado.");
+        return listaPersonas;
     }
 
+    public void insertarBases(){
+        ArrayList<Persona> p;
+        try {
+            p = leerArchivo("final2.txt");
+            System.out.println("Total objetos: " + p.size());
+            for(int i=0; i< p.size();i++){
+                insertarPersonaMysql(p.get(i));
+                insertarPersonaRedis(p.get(i));
+                insertarPersonaMongo(p.get(i));
+                System.out.println(p.get(i).toString());
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(PersonaDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+            
+            
+            
+    }
     public void insertarPersonaMysql(Persona objPer) {
+        SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd");
         try {
             PreparedStatement ps = con.prepareStatement("INSERT INTO PERSONA(CEDULA,NOMBRE,APELLIDO,FECHA) VALUES (?,?,?,?);");
-
             ps.setString(1, String.valueOf(objPer.getCedula()));
             ps.setString(2, String.valueOf(objPer.getNombre()));
             ps.setString(3, String.valueOf(objPer.getApellido()));
@@ -108,21 +122,17 @@ public class PersonaDAO {
             ps.executeUpdate();
             ps.close();
             //System.out.println("Conexion Cerrada");
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.out.println(e.getMessage());
-            System.out.println("No registrados");
+            System.out.println("No registrado");
         }
     }
 
     public void insertarPersonaRedis(Persona objPers) {
-
         this.conRedis.set(objPers.getCedula(), objPers.getNombre() + "|" + objPers.getApellido() + "|" + objPers.getFechaNacimiento());
     }
 
     public void insertarPersonaMongo(Persona objPer) {
-
-        DateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-       
         this.mongodb.getCollection("persona").insertOne(
                     new Document("cedula", objPer.getCedula())
                             .append("nombre", objPer.getNombre())
@@ -138,34 +148,31 @@ public class PersonaDAO {
             Statement st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT * FROM persona WHERE CEDULA='" + cedula + "';");
             estPer = new Persona();
+            
             while (rs.next()) {
                 estPer.setCedula(rs.getString(1));
                 estPer.setNombre(rs.getString(2));
                 estPer.setApellido(rs.getString(3));
-                estPer.setFechaNacimiento(format.parse(rs.getString(4)));
+                estPer.setFechaNacimiento(rs.getString(4));
             }
             rs.close();
             st.close();
-
-        } catch (Exception e) {
+            System.out.println(estPer.toString());
+        } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        System.out.println(estPer.toString());
+        
     }
 
     public void buscarPersonaRedis(String cedula) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat format = new SimpleDateFormat();
         String cadena = this.conRedis.get(cedula);
         String[] persona = cadena.split("\\|");
         Persona objPersona = new Persona();
         objPersona.setCedula(cedula);
         objPersona.setNombre(persona[0]);
         objPersona.setApellido(persona[1]);
-        try {
-            objPersona.setFechaNacimiento(format.parse(persona[2]));
-        } catch (ParseException ex) {
-            Logger.getLogger(PersonaDAO.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        objPersona.setFechaNacimiento(persona[2]);
         System.out.println(objPersona.toString());
     }
     

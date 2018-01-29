@@ -11,7 +11,7 @@ public class Persona {
     private String cedula;
     private String nombre;
     private String apellido;
-    private Date fechaNacimiento; 
+    private String fechaNacimiento; 
 
     public Persona() {
     }
@@ -42,13 +42,15 @@ public class Persona {
         this.apellido = apellido;
     }
 
-    public Date getFechaNacimiento() {
+    public String getFechaNacimiento() {
         return fechaNacimiento;
     }
 
-    public void setFechaNacimiento(Date fechaNacimiento) {
+    public void setFechaNacimiento(String fechaNacimiento) {
         this.fechaNacimiento = fechaNacimiento;
     }
+
+    
 
     
 
